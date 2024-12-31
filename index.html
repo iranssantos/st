@@ -3,12 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teste de Áudio</title>
+    <title>Apresentação Sincronizada com Áudio</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            background-color: #f0f0f0;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            position: relative;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .indicators {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin: 0 5px;
+            background-color: #ccc;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .indicator.active {
+            background-color: #333;
+        }
+    </style>
 </head>
 <body>
-    <audio controls>
-        <source src="https://github.com/iranssantos/st/blob/main/untitled.mp3" type="audio/mpeg">
-        Seu navegador não suporta o elemento de áudio.
-    </audio>
+
+    <!-- Slides -->
+    <div id="slide1" class="slide active">
+        <p>Bem-vindo à Apresentação!</p>
+    </div>
+    <div id="slide2" class="slide">
+        <p>Este é o segundo slide.</p>
+    </div>
+    <div id="slide3" class="slide">
+        <p>Obrigado por assistir!</p>
+    </div>
+
+    <!-- Indicadores -->
+    <div class="indicators">
+        <span class="indicator active" data-slide="0"></span>
+        <span class="indicator" data-slide="1"></span>
+        <span class="indicator" data-slide="2"></span>
+    </div>
+
+    <!-- Controles -->
+    <div class="controls">
+        <button id="prev">Anterior</button>
+        <button id="playPause">Play</button>
+        <button id="next">Próximo</button>
+    </div>
+
+    <!-- Áudio -->
+    <audio id="audio" src="https://github.com/iranssantos/st/blob/main/untitled.mp3"></audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const audio = document.getElementById('audio');
+            const playPauseBtn = document.getElementById('playPause');
+            const nextBtn = document.getElementById('next');
+            const prevBtn = document.getElementById('prev');
+            const slides = document.querySelectorAll('.slide');
+            const indicators = document.querySelectorAll('.indicator');
+            let currentSlide = 0;
+            let isPlaying = false;
+
+            // Definir os tempos para cada slide (em segundos)
+            const slideTimings = [
+                { time: 0, slide: 0 },        // Slide 1 começa em 0s
+                { time: 2.5, slide: 1 },       // Slide 2 começa em 10s
+                { time: 4.5, slide: 2 },       // Slide 3 começa em 20s
+            ];
+
+            // Função para exibir o slide atual
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === index);
+                });
+                updateIndicators(index);
+                currentSlide = index;
+            }
+
+            // Função para atualizar os indicadores
+            function updateIndicators(index) {
+                indicators.forEach((indicator, i) => {
+                    indicator.classList.toggle('active', i === index);
+                });
+            }
+
+            // Função para avançar para o próximo slide
+            function nextSlide() {
+                if (currentSlide < slides.length - 1) {
+                    showSlide(currentSlide + 1);
+                    audio.currentTime = slideTimings[currentSlide + 1].time;
+                }
+            }
+
+            // Função para voltar ao slide anterior
+            function prevSlide() {
+                if (currentSlide > 0) {
+                    showSlide(currentSlide - 1);
+                    audio.currentTime = slideTimings[currentSlide - 1].time;
+                }
+            }
+
+            // Evento para Play/Pause
+            playPauseBtn.addEventListener('click', () => {
+                if (isPlaying) {
+                    audio.pause();
+                    playPauseBtn.textContent = 'Play';
+                } else {
+                    audio.play();
+                    playPauseBtn.textContent = 'Pause';
+                }
+                isPlaying = !isPlaying;
+            });
+
+            // Eventos para Next e Previous
+            nextBtn.addEventListener('click', nextSlide);
+            prevBtn.addEventListener('click', prevSlide);
+
+            // Eventos para os indicadores
+            indicators.forEach(indicator => {
+                indicator.addEventListener('click', () => {
+                    const index = parseInt(indicator.getAttribute('data-slide'));
+                    showSlide(index);
+                    audio.currentTime = slideTimings[index].time;
+                });
+            });
+
+            // Evento para sincronizar slides com o tempo do áudio
+            audio.addEventListener('timeupdate', () => {
+                const currentTime = audio.currentTime;
+                for (let i = slideTimings.length - 1; i >= 0; i--) {
+                    if (currentTime >= slideTimings[i].time) {
+                        if (currentSlide !== slideTimings[i].slide) {
+                            showSlide(slideTimings[i].slide);
+                        }
+                        break;
+                    }
+                }
+            });
+
+            // Opcional: Resetar para o primeiro slide quando o áudio terminar
+            audio.addEventListener('ended', () => {
+                showSlide(0);
+                playPauseBtn.textContent = 'Play';
+                isPlaying = false;
+            });
+        });
+    </script>
 </body>
 </html>
