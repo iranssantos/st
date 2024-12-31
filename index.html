@@ -10,55 +10,74 @@
             font-family: Arial, sans-serif;
             position: relative;
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
         }
 
         .slide {
             display: none;
             width: 100%;
-            height: 100vh;
+            height: 100%;
             justify-content: center;
             align-items: center;
-            font-size: 2em;
-            background-color: #f0f0f0;
+            font-size: 5vw;
+            background-color: #ffffff;
             opacity: 0;
             transition: opacity 1s ease-in-out;
             position: absolute;
             top: 0;
             left: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
         }
 
         .slide.active {
             display: flex;
             opacity: 1;
-            position: relative;
         }
 
         .controls {
             position: fixed;
-            bottom: 20px;
+            bottom: 10%;
             left: 50%;
             transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            font-size: 1rem;
         }
 
         button {
-            padding: 10px 20px;
-            margin: 0 10px;
+            padding: 10px 15px;
             font-size: 1em;
             cursor: pointer;
+            background-color: #000000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
         }
 
         .indicators {
             position: fixed;
-            top: 20px;
+            top: 5%;
             left: 50%;
             transform: translateX(-50%);
+            display: flex;
+            gap: 5px;
         }
 
         .indicator {
             display: inline-block;
             width: 10px;
             height: 10px;
-            margin: 0 5px;
             background-color: #ccc;
             border-radius: 50%;
             cursor: pointer;
@@ -67,16 +86,53 @@
         .indicator.active {
             background-color: #333;
         }
+
+        /* Responsividade para telas menores */
+        @media (max-width: 600px) {
+            .controls button {
+                padding: 8px 12px;
+                font-size: 0.9em;
+            }
+
+            .indicators .indicator {
+                width: 8px;
+                height: 8px;
+            }
+
+            .slide {
+                font-size: 6vw;
+            }
+
+            .slide p {
+                font-size: 4vw;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .slide {
+                font-size: 7vw;
+            }
+
+            .slide p {
+                font-size: 5vw;
+            }
+        }
     </style>
+    <!-- Inclusão do script MathJax com suporte a AsciiMath -->
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
 </head>
 <body>
 
     <!-- Slides -->
     <div id="slide1" class="slide active">
         <p>Bem-vindo à Apresentação!</p>
+        <p>Expressão Matemática: \( x^2 + y^2 = z^2 \)</p>
     </div>
     <div id="slide2" class="slide">
         <p>Este é o segundo slide.</p>
+        <p>Expressão Matemática: $$\int_{0}^{1} x^2 dx$$</p>
     </div>
     <div id="slide3" class="slide">
         <p>Obrigado por assistir!</p>
@@ -84,9 +140,7 @@
 
     <!-- Indicadores -->
     <div class="indicators">
-        <span class="indicator active" data-slide="0"></span>
-        <span class="indicator" data-slide="1"></span>
-        <span class="indicator" data-slide="2"></span>
+        <!-- Indicadores serão adicionados dinamicamente -->
     </div>
 
     <!-- Controles -->
@@ -97,7 +151,7 @@
     </div>
 
     <!-- Áudio -->
-    <audio id="audio" src="https://github.com/iranssantos/st/blob/main/untitled.mp3"></audio>
+    <audio id="audio" src="https://github.com/iranssantos/st/raw/refs/heads/main/untitled.mp3"></audio>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -106,16 +160,28 @@
             const nextBtn = document.getElementById('next');
             const prevBtn = document.getElementById('prev');
             const slides = document.querySelectorAll('.slide');
-            const indicators = document.querySelectorAll('.indicator');
+            const indicatorsContainer = document.querySelector('.indicators');
             let currentSlide = 0;
             let isPlaying = false;
 
             // Definir os tempos para cada slide (em segundos)
             const slideTimings = [
                 { time: 0, slide: 0 },        // Slide 1 começa em 0s
-                { time: 2.5, slide: 1 },       // Slide 2 começa em 10s
-                { time: 4.5, slide: 2 },       // Slide 3 começa em 20s
+                { time: 2.5, slide: 1 },      // Slide 2 começa em 2.5s
+                { time: 4.5, slide: 2 },      // Slide 3 começa em 4.5s
             ];
+
+            // Definir quais slides terão indicadores
+            const slidesComIndicadores = [0, 2]; // Apenas o slide 1 e 3 terão indicadores
+
+            // Gerar indicadores apenas para os slides selecionados
+            slidesComIndicadores.forEach(index => {
+                const indicator = document.createElement('span');
+                indicator.classList.add('indicator');
+                indicator.setAttribute('data-slide', index);
+                if (index === currentSlide) indicator.classList.add('active');
+                indicatorsContainer.appendChild(indicator);
+            });
 
             // Função para exibir o slide atual
             function showSlide(index) {
@@ -124,10 +190,15 @@
                 });
                 updateIndicators(index);
                 currentSlide = index;
+                audio.currentTime = slideTimings[index].time; // Ajusta o tempo do áudio para o slide atual
+                
+                // Forçar a renderização do MathJax após exibir o slide
+                MathJax.typeset(); // Renderiza expressões matemáticas
             }
 
             // Função para atualizar os indicadores
             function updateIndicators(index) {
+                const indicators = document.querySelectorAll('.indicator');
                 indicators.forEach((indicator, i) => {
                     indicator.classList.toggle('active', i === index);
                 });
@@ -137,7 +208,6 @@
             function nextSlide() {
                 if (currentSlide < slides.length - 1) {
                     showSlide(currentSlide + 1);
-                    audio.currentTime = slideTimings[currentSlide + 1].time;
                 }
             }
 
@@ -145,7 +215,6 @@
             function prevSlide() {
                 if (currentSlide > 0) {
                     showSlide(currentSlide - 1);
-                    audio.currentTime = slideTimings[currentSlide - 1].time;
                 }
             }
 
@@ -166,12 +235,12 @@
             prevBtn.addEventListener('click', prevSlide);
 
             // Eventos para os indicadores
-            indicators.forEach(indicator => {
-                indicator.addEventListener('click', () => {
-                    const index = parseInt(indicator.getAttribute('data-slide'));
+            indicatorsContainer.addEventListener('click', (event) => {
+                if (event.target.classList.contains('indicator')) {
+                    const index = parseInt(event.target.getAttribute('data-slide'));
                     showSlide(index);
                     audio.currentTime = slideTimings[index].time;
-                });
+                }
             });
 
             // Evento para sincronizar slides com o tempo do áudio
@@ -193,6 +262,9 @@
                 playPauseBtn.textContent = 'Play';
                 isPlaying = false;
             });
+
+            // Forçar a renderização do MathJax quando a página for carregada
+            MathJax.typeset(); // Renderiza expressões matemáticas na inicialização
         });
     </script>
 </body>
