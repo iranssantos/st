@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Slide Presentation</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #slideshow {
+      width: 100%;
+      max-width: 800px;
+      aspect-ratio: 16/9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 2rem;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
+      transition: opacity 1s ease;
+      opacity: 0;
+    }
+
+    .slide.active {
+      opacity: 1;
+    }
+
+    audio {
+      position: absolute;
+      bottom: 20px;
+      width: 90%;
+    }
+  </style>
+</head>
+<body>
+  <div id="slideshow"></div>
+  <audio id="audio" controls></audio>
+
+  <script>
+    // URL do arquivo JSON
+    const dataUrl = 'https://example.com/slides-data.json';
+
+    fetch(dataUrl)
+      .then(response => response.json())
+      .then(data => {
+        const slideshow = document.getElementById('slideshow');
+        const audio = document.getElementById('audio');
+
+        // Configurar slides
+        data.slides.forEach((slide, index) => {
+          const slideElement = document.createElement('div');
+          slideElement.className = 'slide';
+          if (index === 0) slideElement.classList.add('active');
+          slideElement.style.backgroundColor = slide.backgroundColor || '#000';
+          slideElement.textContent = slide.content;
+          slideshow.appendChild(slideElement);
+        });
+
+        // Configurar áudio
+        audio.src = data.audio;
+
+        const slides = document.querySelectorAll('.slide');
+        let currentSlide = 0;
+
+        // Configurar transições de slides com base no áudio
+        audio.addEventListener('timeupdate', () => {
+          const currentTime = audio.currentTime;
+          for (let i = 0; i < data.timings.length; i++) {
+            if (currentTime >= data.timings[i] && (i === data.timings.length - 1 || currentTime < data.timings[i + 1])) {
+              changeSlide(i);
+              break;
+            }
+          }
+        });
+
+        function changeSlide(index) {
+          slides[currentSlide].classList.remove('active');
+          slides[index].classList.add('active');
+          currentSlide = index;
+        }
+      })
+      .catch(err => console.error('Failed to load slide data:', err));
+  </script>
+</body>
+</html>
